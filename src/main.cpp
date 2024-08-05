@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include <webgpu/webgpu.h>
 #include <iostream>
@@ -21,6 +22,9 @@ int main()
     // copied around without worrying about its size).
     std::cout << "WGPU instance: " << instance << std::endl;
 
+    std::cout << "WebGPU initialized successfully!" << std::endl;
+
+    wgpuInstanceRelease(instance);
 
     return 0;
 }

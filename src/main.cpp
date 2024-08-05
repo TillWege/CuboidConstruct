@@ -1,9 +1,10 @@
-#include <cstddef>
 #include <iostream>
 #include <webgpu/webgpu.h>
-#include <iostream>
 #include "cassert"
 #include "vector"
+#ifdef WEBGPU_BACKEND_WGPU
+#  include <webgpu/wgpu.h>
+#endif // WEBGPU_BACKEND_WGPU
 
 WGPUInstance getInstance()
 {
@@ -239,7 +240,10 @@ void printDeviceInfo(WGPUDevice device)
     }
 }
 
-
+void onQueueWorkDone(WGPUQueueWorkDoneStatus status, void* /* pUserData */)
+{
+	std::cout << "Queued work finished with status: " << status << std::endl;
+}
 
 int main()
 {
@@ -277,6 +281,38 @@ int main()
     wgpuAdapterRelease(adapter);
 
     printDeviceInfo(device);
+
+	WGPUQueue queue = wgpuDeviceGetQueue(device);
+	wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr);
+
+	WGPUCommandEncoderDescriptor encoderDesc = {};
+	encoderDesc.nextInChain = nullptr;
+	encoderDesc.label = "My command encoder";
+	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+
+	WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
+	cmdBufferDescriptor.nextInChain = nullptr;
+	cmdBufferDescriptor.label = "Command buffer";
+	WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+	wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
+
+	std::cout << "Submitting command..." << std::endl;
+	wgpuQueueSubmit(queue, 1, &command);
+	wgpuCommandBufferRelease(command);
+	std::cout << "Command submitted." << std::endl;
+
+	wgpuQueueRelease(queue);
+
+	for (int i = 0 ; i < 5 ; ++i) {
+		std::cout << "Tick/Poll device..." << std::endl;
+#if defined(WEBGPU_BACKEND_DAWN)
+		wgpuDeviceTick(device);
+#elif defined(WEBGPU_BACKEND_WGPU)
+		wgpuDevicePoll(device, false, nullptr);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+		emscripten_sleep(100);
+#endif
+	}
 
     wgpuDeviceRelease(device);
 

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <GLFW/glfw3.h>
 #include <webgpu/webgpu.h>
 #include "cassert"
 #include "vector"
@@ -247,6 +248,25 @@ void onQueueWorkDone(WGPUQueueWorkDoneStatus status, void* /* pUserData */)
 
 int main()
 {
+	if (!glfwInit()) {
+		std::cerr << "Could not initialize GLFW!" << std::endl;
+		return 1;
+	}
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	GLFWwindow* window = glfwCreateWindow(1280, 720,
+		"Cuboid Construct",
+		nullptr,
+		nullptr
+	);
+
+	if (!window) {
+		std::cerr << "Could not open window!" << std::endl;
+		glfwTerminate();
+		return 1;
+	}
+
     auto instance = getInstance();
 
     if(instance == nullptr)
@@ -315,6 +335,14 @@ int main()
 	}
 
     wgpuDeviceRelease(device);
+
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+	}
+
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 
     return 0;
 }

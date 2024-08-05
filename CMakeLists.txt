@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(cc)
+include(FetchContent)
 
 file(GLOB sources CONFIGURE_DEPENDS
         "src/*.h" "src/*.cpp")
@@ -8,7 +9,12 @@ add_executable(cc ${sources})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include(FetchContent)
+FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw
+        GIT_TAG        master
+)
+FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(
   webgpu
@@ -23,7 +29,7 @@ set_target_properties(cc PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
-
+target_link_libraries(cc PRIVATE glfw)
 target_link_libraries(cc PRIVATE webgpu)
 
 if (MSVC)

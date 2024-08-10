@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.11)
 project(cc)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(FetchContent)
 
 file(GLOB sources CONFIGURE_DEPENDS
         "src/*.h" "src/*.cpp")
 
 add_executable(cc ${sources})
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 FetchContent_Declare(
         glfw

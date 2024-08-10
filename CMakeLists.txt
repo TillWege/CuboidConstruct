@@ -6,17 +6,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 
 file(GLOB sources CONFIGURE_DEPENDS
-        "src/*.h" "src/*.cpp")
+        "src/*.h" "src/*.cpp"
+        "src/**/*.h" "src/**/*.cpp")
 
 add_executable(cc ${sources})
 
-FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw
-        GIT_TAG        master
-)
-FetchContent_MakeAvailable(glfw)
-
+if (NOT EMSCRIPTEN)
+    FetchContent_Declare(
+            glfw
+            GIT_REPOSITORY https://github.com/glfw/glfw
+            GIT_TAG        master
+    )
+    FetchContent_MakeAvailable(glfw)
+endif()
 FetchContent_Declare(
   webgpu
   GIT_REPOSITORY https://github.com/eliemichel/WebGPU-distribution
@@ -32,6 +34,16 @@ set_target_properties(cc PROPERTIES
 
 target_link_libraries(cc PRIVATE glfw)
 target_link_libraries(cc PRIVATE webgpu)
+
+# Options that are specific to Emscripten
+if (EMSCRIPTEN)
+    set_target_properties(cc PROPERTIES SUFFIX ".html")
+    target_link_options(cc PRIVATE
+        -sUSE_GLFW=3 # Use Emscripten-provided GLFW
+        -sUSE_WEBGPU # Handle WebGPU symbols
+        -sASYNCIFY # Required by WebGPU-C++
+    )
+endif()
 
 if (MSVC)
     target_compile_options(cc PRIVATE /W4)

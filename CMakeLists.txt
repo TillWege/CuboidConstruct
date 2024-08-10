@@ -19,6 +19,15 @@ if (NOT EMSCRIPTEN)
     )
     FetchContent_MakeAvailable(glfw)
 endif()
+
+
+FetchContent_Declare(
+  glfw3webgpu
+  GIT_REPOSITORY https://github.com/eliemichel/glfw3webgpu.git
+  GIT_TAG        main
+)
+FetchContent_MakeAvailable(glfw3webgpu)
+
 FetchContent_Declare(
   webgpu
   GIT_REPOSITORY https://github.com/eliemichel/WebGPU-distribution
@@ -33,6 +42,7 @@ set_target_properties(cc PROPERTIES
 )
 
 target_link_libraries(cc PRIVATE glfw)
+target_link_libraries(cc PRIVATE glfw3webgpu)
 target_link_libraries(cc PRIVATE webgpu)
 
 # Options that are specific to Emscripten

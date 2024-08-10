@@ -1,7 +1,8 @@
 #include "app.hpp"
 #include "GLFW/glfw3.h"
 #include <iostream>
-
+#include <glfw3webgpu.h>
+#include <webgpu/webgpu.h>
 #ifdef WEBGPU_BACKEND_WGPU
     #include <webgpu/wgpu.h>
 #endif // WEBGPU_BACKEND_WGPU
@@ -55,18 +56,20 @@ App::App()
 
        std::cout << "Requesting device..." << std::endl;
 
-       device = getDevice(adapter);
+       m_device = getDevice(adapter);
 
-       if(device == nullptr)
+       if(m_device == nullptr)
            return;
 
-       std::cout << "Got device: " << device << std::endl;
+       std::cout << "Got device: " << m_device << std::endl;
 
        wgpuAdapterRelease(adapter);
 
-       printDeviceInfo(device);
+       printDeviceInfo(m_device);
 
-	queue = getQueue(device);
+	m_queue = getQueue(m_device);
+
+	m_surface = glfwGetWGPUSurface(instance, m_window);
 
     this->m_isReady = true;
     this->m_isRunning = true;
@@ -77,7 +80,7 @@ void App::TestWGPU()
     WGPUCommandEncoderDescriptor encoderDesc = {};
 	encoderDesc.nextInChain = nullptr;
 	encoderDesc.label = "Test encoder";
-	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(m_device, &encoderDesc);
 
 	WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
 	cmdBufferDescriptor.nextInChain = nullptr;
@@ -86,7 +89,7 @@ void App::TestWGPU()
 	wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
 
 	std::cout << "Submitting test command..." << std::endl;
-	wgpuQueueSubmit(queue, 1, &command);
+	wgpuQueueSubmit(m_queue, 1, &command);
 	wgpuCommandBufferRelease(command);
 	std::cout << "Command test submitted." << std::endl;
 
@@ -95,7 +98,7 @@ void App::TestWGPU()
       #if defined(WEBGPU_BACKEND_DAWN)
 		wgpuDeviceTick(device);
       #elif defined(WEBGPU_BACKEND_WGPU)
-		wgpuDevicePoll(device, false, nullptr);
+		wgpuDevicePoll(m_device, false, nullptr);
       #elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
 		emscripten_sleep(100);
       #endif
@@ -113,8 +116,9 @@ void App::Update()
 
 void App::Terminate()
 {
-    wgpuQueueRelease(queue);
-    wgpuDeviceRelease(device);
+    wgpuSurfaceRelease(m_surface);
+    wgpuQueueRelease(m_queue);
+    wgpuDeviceRelease(m_device);
 
    	glfwDestroyWindow(m_window);
 	glfwTerminate();

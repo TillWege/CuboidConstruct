@@ -17,6 +17,7 @@ class App
         bool m_isRunning = false;
 
         GLFWwindow* m_window = nullptr;
-        WGPUDevice device;
-        WGPUQueue queue;
+        WGPUDevice m_device;
+        WGPUQueue m_queue;
+        WGPUSurface m_surface;
 };

@@ -142,6 +142,29 @@ WGPUQueue getQueue(WGPUDevice device)
 }
 
 
+void configureSurface(WGPUSurface surface, WGPUAdapter adapater, WGPUDevice device)
+{
+
+    WGPUSurfaceConfiguration config = {};
+    config.nextInChain = nullptr;
+
+    config.width = 640;
+    config.height = 480;
+
+    WGPUTextureFormat surfaceFormat = wgpuSurfaceGetPreferredFormat(surface, adapater);
+
+    config.format = surfaceFormat;
+    config.viewFormatCount = 0;
+    config.viewFormats = nullptr;
+    config.usage = WGPUTextureUsage_RenderAttachment;
+    config.device = device;
+
+    config.presentMode = WGPUPresentMode_Fifo;
+    config.alphaMode = WGPUCompositeAlphaMode_Auto;
+
+    wgpuSurfaceConfigure(surface, &config);
+}
+
 //
 // Insepct Functions
 //

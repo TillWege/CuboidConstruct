@@ -5,13 +5,14 @@ class App
 {
     public:
         App();
-        void Update();
+        bool Update();
         void Terminate();
 
         bool IsReady();
         bool IsRunning();
 
         void TestWGPU();
+        void UpdateRunning(bool isRunning);
     private:
         bool m_isReady = false;
         bool m_isRunning = false;
@@ -20,4 +21,6 @@ class App
         WGPUDevice m_device;
         WGPUQueue m_queue;
         WGPUSurface m_surface;
+
+        WGPUTextureView GetNextSurfaceTextureView();
 };

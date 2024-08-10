@@ -33,7 +33,7 @@ int main()
     #else // __EMSCRIPTEN__
         while(app.IsRunning())
         {
-            app.Update();
+            app.UpdateRunning(app.Update());
         }
     #endif // __EMSCRIPTEN__
 

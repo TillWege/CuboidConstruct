@@ -11,6 +11,9 @@
     #include <emscripten.h>
 #endif // __EMSCRIPTEN__
 
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
+
 App::App()
 {
    	if (!glfwInit()) {
@@ -20,7 +23,7 @@ App::App()
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	m_window = glfwCreateWindow(1280, 720,
+	m_window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT,
 		"Cuboid Construct",
 		nullptr,
 		nullptr
@@ -32,48 +35,82 @@ App::App()
 		return;
 	}
 
-       auto instance = getInstance();
+    auto instance = getInstance();
 
-       if(instance == nullptr)
-           return;
+    if(instance == nullptr)
+        return;
 
-       std::cout << "WGPU instance: " << instance << std::endl;
-       std::cout << "WebGPU initialized successfully!" << std::endl;
+    std::cout << "WGPU instance: " << instance << std::endl;
+    std::cout << "WebGPU initialized successfully!" << std::endl;
 
-       std::cout << "Requesting adapter..." << std::endl;
-       WGPUAdapter adapter = requestAdapterSync(instance);
+    std::cout << "Requesting adapter..." << std::endl;
+    WGPUAdapter adapter = requestAdapterSync(instance);
 
-       if(adapter == nullptr)
-           return;
+    if(adapter == nullptr)
+        return;
 
-       std::cout << "Got adapter: " << adapter << std::endl;
+    std::cout << "Got adapter: " << adapter << std::endl;
 
-       wgpuInstanceRelease(instance);
 
-       printAdapterLimits(adapter);
-       printAdapterFeatures(adapter);
-       printAdapterProperties(adapter);
 
-       std::cout << "Requesting device..." << std::endl;
+    printAdapterLimits(adapter);
+    printAdapterFeatures(adapter);
+    printAdapterProperties(adapter);
 
-       m_device = getDevice(adapter);
+    std::cout << "Requesting device..." << std::endl;
 
-       if(m_device == nullptr)
-           return;
+    m_device = getDevice(adapter);
 
-       std::cout << "Got device: " << m_device << std::endl;
+    if(m_device == nullptr)
+        return;
 
-       wgpuAdapterRelease(adapter);
+    std::cout << "Got device: " << m_device << std::endl;
 
-       printDeviceInfo(m_device);
+    printDeviceInfo(m_device);
 
 	m_queue = getQueue(m_device);
 
 	m_surface = glfwGetWGPUSurface(instance, m_window);
 
+	configureSurface(m_surface, adapter, m_device);
+
+    wgpuInstanceRelease(instance);
+    wgpuAdapterRelease(adapter);
+
     this->m_isReady = true;
     this->m_isRunning = true;
 }
+
+void App::UpdateRunning(bool isRunning)
+{
+    this->m_isRunning = isRunning;
+}
+
+
+WGPUTextureView App::GetNextSurfaceTextureView() {
+    WGPUSurfaceTexture surfaceTexture;
+    wgpuSurfaceGetCurrentTexture(m_surface, &surfaceTexture);
+
+    if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+        return nullptr;
+    }
+
+    WGPUTextureViewDescriptor viewDescriptor;
+    viewDescriptor.nextInChain = nullptr;
+    viewDescriptor.label = "Surface texture view";
+    viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
+    viewDescriptor.dimension = WGPUTextureViewDimension_2D;
+    viewDescriptor.baseMipLevel = 0;
+    viewDescriptor.mipLevelCount = 1;
+    viewDescriptor.baseArrayLayer = 0;
+    viewDescriptor.arrayLayerCount = 1;
+    viewDescriptor.aspect = WGPUTextureAspect_All;
+    WGPUTextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+
+
+    return targetView;
+}
+
 
 void App::TestWGPU()
 {
@@ -106,16 +143,31 @@ void App::TestWGPU()
 }
 
 
-void App::Update()
+bool App::Update()
 {
     glfwPollEvents();
 
     if(glfwWindowShouldClose(m_window))
-        this->m_isRunning = false;
+        return false;
+
+    WGPUTextureView targetView = GetNextSurfaceTextureView();
+    if (!targetView)
+        return false;
+
+
+
+
+    wgpuTextureViewRelease(targetView);
+#ifndef __EMSCRIPTEN__
+    wgpuSurfacePresent(m_surface);
+#endif
+
+    return true;
 }
 
 void App::Terminate()
 {
+    wgpuSurfaceUnconfigure(m_surface);
     wgpuSurfaceRelease(m_surface);
     wgpuQueueRelease(m_queue);
     wgpuDeviceRelease(m_device);

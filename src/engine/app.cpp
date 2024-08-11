@@ -10,9 +10,7 @@
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
 #endif // __EMSCRIPTEN__
-
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+#include "consts.hpp"
 
 App::App()
 {

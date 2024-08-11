@@ -6,6 +6,7 @@
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
 #endif // __EMSCRIPTEN__
+#include "consts.hpp"
 
 WGPUInstance getInstance()
 {
@@ -148,8 +149,8 @@ void configureSurface(WGPUSurface surface, WGPUAdapter adapater, WGPUDevice devi
     WGPUSurfaceConfiguration config = {};
     config.nextInChain = nullptr;
 
-    config.width = 640;
-    config.height = 480;
+    config.width = SCREEN_WIDTH;
+    config.height = SCREEN_HEIGHT;
 
     WGPUTextureFormat surfaceFormat = wgpuSurfaceGetPreferredFormat(surface, adapater);
 
